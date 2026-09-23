@@ -8,11 +8,25 @@ interface LocalFile {
   type: string
 }
 
+
+interface IndexedFile {
+  name: string
+  path: string
+  size: number
+  content_type: string | null
+  extension: string
+}
+
 const supportedExtensions = new Set(['txt', 'md', 'pdf', 'doc', 'docx']);
 
 const folderInput = ref<HTMLInputElement | null>(null)
 const files = ref<LocalFile[]>([])
 const folderName = ref<string|undefined>('')
+
+const isIndexing = ref(false)
+const indexError = ref('')
+const indexedFiles = ref<IndexedFile[]>([])
+
 
 const supportedFiles = computed(() => {
   return files.value.filter(file => {
@@ -62,6 +76,73 @@ function formatFileSize(bytes: number) {
   }
 
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+async function indexFiles() {
+  if (supportedFiles.value.length === 0) {
+    return
+  }
+
+  isIndexing.value = true
+  indexError.value = ''
+
+  try {
+    const formData = new FormData()
+
+    const metadata = supportedFiles.value.map((file) => ({
+      name: file.name,
+      path: file.path,
+    }))
+
+    for (const file of supportedFiles.value) {
+      const localFile = files.value.find(
+        (candidate) => candidate.path === file.path,
+      )
+
+      if (!localFile) {
+        continue
+      }
+
+      const inputFiles = folderInput.value?.files
+
+      if (!inputFiles) {
+        continue
+      }
+
+      const browserFile = Array.from(inputFiles).find(
+        (candidate) =>
+          (candidate.webkitRelativePath || candidate.name) === file.path,
+      )
+
+      if (!browserFile) {
+        continue
+      }
+
+      formData.append('files', browserFile)
+    }
+
+    formData.append('metadata', JSON.stringify(metadata))
+
+    const response = await fetch('/api/files', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    indexedFiles.value = data.files
+  } catch (error) {
+    indexError.value =
+      error instanceof Error
+        ? error.message
+        : 'Failed to index files.'
+  } finally {
+    isIndexing.value = false
+  }
 }
 </script>
 
@@ -119,6 +200,38 @@ function formatFileSize(bytes: number) {
             <span class="file-size">
               {{ formatFileSize(file.size) }}
             </span>
+          </div>
+        </div>
+
+      <button
+          v-if="supportedFiles.length > 0"
+          class="index-button"
+          type="button"
+          :disabled="isIndexing"
+          @click="indexFiles"
+        >
+          {{ isIndexing ? 'Indexing...' : 'Index documents' }}
+        </button>
+
+        <p v-if="indexError" class="error-message">
+          {{ indexError }}
+        </p>
+
+        <div
+          v-if="indexedFiles.length > 0"
+          class="indexed-section"
+        >
+          <p class="indexed-title">
+            Backend received {{ indexedFiles.length }} documents
+          </p>
+
+          <div
+            v-for="document in indexedFiles"
+            :key="document.path"
+            class="indexed-row"
+          >
+            <span>{{ document.name }}</span>
+            <span>{{ formatFileSize(document.size) }}</span>
           </div>
         </div>
       </div>
