@@ -81,3 +81,73 @@ h1 {
 .select-button:hover {
   opacity: 0.9;
 }
+
+.files-section {
+  width: min(800px, 100%);
+  margin: 48px auto 0;
+  text-align: left;
+}
+
+.files-header {
+  margin-bottom: 16px;
+}
+
+.folder-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.file-count {
+  margin: 4px 0 0;
+  color: #71717a;
+  font-size: 14px;
+}
+
+.files-list {
+  overflow: hidden;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  background: white;
+}
+
+.file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f4f4f5;
+}
+
+.file-row:last-child {
+  border-bottom: 0;
+}
+
+.file-info {
+  min-width: 0;
+}
+
+.file-name {
+  display: block;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-path {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  color: #71717a;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-size {
+  flex-shrink: 0;
+  color: #71717a;
+  font-size: 13px;
+}
