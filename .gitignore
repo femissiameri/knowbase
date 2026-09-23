@@ -1,0 +1,113 @@
+# ─────────────────────────────────────────────
+
+# Python / Backend
+
+# ─────────────────────────────────────────────
+
+backend/**pycache**/
+backend/*.py[cod]
+backend/*.so
+backend/.venv/
+backend/build/
+backend/dist/
+backend/wheels/
+backend/*.egg-info/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/.coverage
+backend/htmlcov/
+
+# Environment / secrets
+
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# ─────────────────────────────────────────────
+
+# Node / Frontend
+
+# ─────────────────────────────────────────────
+
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/coverage/
+
+# Logs
+
+frontend/logs/
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# Local environment
+
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Build / cache
+
+frontend/*.local
+frontend/*.tsbuildinfo
+frontend/.eslintcache
+
+# ─────────────────────────────────────────────
+
+# IDE / Editor
+
+# ─────────────────────────────────────────────
+
+frontend/.vscode/*
+!frontend/.vscode/extensions.json
+frontend/.idea/
+frontend/*.suo
+frontend/*.ntvs*
+frontend/*.njsproj
+frontend/*.sln
+frontend/*.sw?
+
+# ─────────────────────────────────────────────
+
+# OS
+
+# ─────────────────────────────────────────────
+
+.DS_Store
+Thumbs.db
+
+# ─────────────────────────────────────────────
+
+# Project-specific
+
+# ─────────────────────────────────────────────
+
+# Local KnowBase data
+
+data/
+backend/data/
+
+# Local vector database / indexes
+
+backend/storage/
+backend/indexes/
+*.db
+*.sqlite
+*.sqlite3
+*.faiss
+*.chromadb/
+*.lancedb/
+
+# Temporary files
+
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
