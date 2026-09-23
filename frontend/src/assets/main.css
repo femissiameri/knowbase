@@ -151,3 +151,23 @@ h1 {
   color: #71717a;
   font-size: 13px;
 }
+
+.empty-state {
+  padding: 32px;
+  border: 1px dashed #d4d4d8;
+  border-radius: 12px;
+  background: #fafafa;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.empty-state span {
+  display: block;
+  margin-top: 6px;
+  color: #71717a;
+  font-size: 14px;
+}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 interface LocalFile {
   name: string
@@ -8,9 +8,19 @@ interface LocalFile {
   type: string
 }
 
+const supportedExtensions = new Set(['txt', 'md', 'pdf', 'doc', 'docx']);
+
 const folderInput = ref<HTMLInputElement | null>(null)
 const files = ref<LocalFile[]>([])
 const folderName = ref<string|undefined>('')
+
+const supportedFiles = computed(() => {
+  return files.value.filter(file => {
+    const extension = file.name.split('.').pop()?.toLowerCase()
+
+    return extension ? supportedExtensions.has(extension) : false
+  })
+})
 
 function openFolderPicker() {
   folderInput.value?.click()
@@ -87,13 +97,20 @@ function formatFileSize(bytes: number) {
           <div>
             <p class="folder-name">{{ folderName }}</p>
             <p class="file-count">
-              {{ files.length }} file{{ files.length === 1 ? '' : 's' }}
+              {{ files.length }} total · {{ supportedFiles.length }} supported
             </p>
           </div>
         </div>
 
-        <div class="files-list">
-          <div v-for="file in files" :key="file.path" class="file-row">
+        <div v-if="supportedFiles.length === 0" class="empty-state">
+          <p>No supported documents found.</p>
+          <span>
+            Supported formats: PDF, DOCX, DOC, Markdown and TXT.
+          </span>
+        </div>
+
+        <div v-else class="files-list">
+          <div v-for="file in supportedFiles" :key="file.path" class="file-row">
             <div class="file-info">
               <span class="file-name">{{ file.name }}</span>
               <span class="file-path">{{ file.path }}</span>
