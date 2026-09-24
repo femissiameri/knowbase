@@ -55,3 +55,20 @@ class SemanticSearchResponse(BaseModel):
     query: str
     total: int
     results: list[SemanticSearchResult]
+
+
+class HybridSearchResult(BaseModel):
+    chunk_id: int
+    document_id: int
+    document_name: str
+    document_path: str
+    chunk_index: int
+    content: str
+    similarity: float | None
+    matched_by: list[str]
+
+
+class HybridSearchResponse(BaseModel):
+    query: str
+    total: int
+    results: list[HybridSearchResult]

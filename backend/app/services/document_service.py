@@ -7,7 +7,14 @@ from fastapi import UploadFile
 from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
-from app.models import Document, Chunk
+from app.models import (
+    Chunk,
+    ChunkEmbedding,
+    Document,
+)
+from app.services.embedding_service import (
+    EmbeddingService,
+)
 from app.schemas import DocumentMetadata, SyncResult
 from app.services.document_parser import extract_text
 from app.services.chunker import chunk_text
@@ -27,6 +34,7 @@ SUPPORTED_EXTENSIONS = {
 class DocumentService:
     def __init__(self, db: Session):
         self.db = db
+        self.embedding_service = EmbeddingService(db)
 
     async def sync_documents(
         self,
@@ -129,8 +137,21 @@ class DocumentService:
             and existing_document.content_hash
             == content_hash
         ):
+            embedding_count = (
+                self.embedding_service
+                .ensure_document_embeddings(
+                    existing_document.id
+                )
+            )
+
             logger.info(
                 "Unchanged: %s",
+                filename,
+            )
+
+            logger.info(
+                "Verified embeddings for %d chunks of %s",
+                embedding_count,
                 filename,
             )
 
@@ -155,9 +176,22 @@ class DocumentService:
 
             self._replace_chunks(document)
 
+            embedding_count = (
+                self.embedding_service
+                .ensure_document_embeddings(
+                    document.id
+                )
+            )
+
             logger.info(
                 "Updated: %s",
                 filename,
+            )
+
+            logger.info(
+                "Generated embeddings for %d chunks of %s",
+                embedding_count,
+                document.name,
             )
 
             return "updated"
@@ -178,8 +212,21 @@ class DocumentService:
 
         self._replace_chunks(document)
 
+        embedding_count = (
+            self.embedding_service
+            .ensure_document_embeddings(
+                document.id
+            )
+        )
+
         logger.info(
             "Created: %s",
+            filename,
+        )
+
+        logger.info(
+            "Generated embeddings for %d chunks of %s",
+            embedding_count,
             filename,
         )
 
@@ -205,6 +252,20 @@ class DocumentService:
                 logger.info(
                     "Deleted: %s",
                     document.path,
+                )
+
+                chunk_ids = select(
+                    Chunk.id
+                ).where(
+                    Chunk.document_id == document.id
+                )
+
+                self.db.execute(
+                    delete(ChunkEmbedding).where(
+                        ChunkEmbedding.chunk_id.in_(
+                            chunk_ids
+                        )
+                    )
                 )
 
                 self.db.execute(
@@ -258,6 +319,22 @@ class DocumentService:
         self,
         document: Document,
     ) -> int:
+        chunk_ids = select(
+            Chunk.id
+        ).where(
+            Chunk.document_id == document.id
+        )
+
+        # Remove embeddings belonging to the old chunks.
+        self.db.execute(
+            delete(ChunkEmbedding).where(
+                ChunkEmbedding.chunk_id.in_(
+                    chunk_ids
+                )
+            )
+        )
+
+        # Remove the old chunks.
         self.db.execute(
             delete(Chunk).where(
                 Chunk.document_id == document.id
@@ -282,6 +359,9 @@ class DocumentService:
                     end_position=end_position,
                 )
             )
+
+        # We need chunk IDs before creating embeddings.
+        self.db.flush()
 
         logger.info(
             "Created %d chunks for %s",

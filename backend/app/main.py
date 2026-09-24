@@ -13,9 +13,13 @@ from app.database import (
 )
 from app.schemas import (
     DocumentsResponse,
+    HybridSearchResponse,
     SearchResponse,
     SemanticSearchResponse,
     SyncResult,
+)
+from app.services.hybrid_search_service import (
+    HybridSearchService,
 )
 from app.services.semantic_search_service import (
     SemanticSearchService,
@@ -116,6 +120,25 @@ async def semantic_search(
     results = service.search(q)
 
     return SemanticSearchResponse(
+        query=q,
+        total=len(results),
+        results=results,
+    )
+
+
+@app.get(
+    "/api/search/hybrid",
+    response_model=HybridSearchResponse,
+)
+async def hybrid_search(
+    q: str,
+    db: Session = Depends(get_db),
+):
+    service = HybridSearchService(db)
+
+    results = service.search(q)
+
+    return HybridSearchResponse(
         query=q,
         total=len(results),
         results=results,

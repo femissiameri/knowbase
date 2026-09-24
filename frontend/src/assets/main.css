@@ -655,6 +655,17 @@ h1 {
   padding: 42px;
 }
 
+.match-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.match-badges .similarity-badge {
+  text-transform: capitalize;
+}
+
 /* ─────────────────────────────────────
    Documents
 ───────────────────────────────────── */
