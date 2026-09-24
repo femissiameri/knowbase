@@ -10,6 +10,7 @@ class DocumentMetadata(BaseModel):
     extension: str
     text_length: int
     text_preview: str
+    chunk_count: int
 
 
 class DocumentsResponse(BaseModel):

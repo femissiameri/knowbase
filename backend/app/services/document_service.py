@@ -4,12 +4,13 @@ import logging
 from pathlib import PurePosixPath
 
 from fastapi import UploadFile
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import Session
 
-from app.models import Document
+from app.models import Document, Chunk
 from app.schemas import DocumentMetadata, SyncResult
 from app.services.document_parser import extract_text
+from app.services.chunker import chunk_text
 
 
 logger = logging.getLogger("knowbase")
@@ -148,6 +149,12 @@ class DocumentService:
             existing_document.content = text
             existing_document.content_hash = content_hash
 
+            document = existing_document
+
+            self.db.flush()
+
+            self._replace_chunks(document)
+
             logger.info(
                 "Updated: %s",
                 filename,
@@ -166,6 +173,10 @@ class DocumentService:
         )
 
         self.db.add(document)
+
+        self.db.flush()
+
+        self._replace_chunks(document)
 
         logger.info(
             "Created: %s",
@@ -194,6 +205,12 @@ class DocumentService:
                 logger.info(
                     "Deleted: %s",
                     document.path,
+                )
+
+                self.db.execute(
+                    delete(Chunk).where(
+                        Chunk.document_id == document.id
+                    )
                 )
 
                 self.db.delete(document)
@@ -230,6 +247,58 @@ class DocumentService:
                 extension=document.extension,
                 text_length=len(document.content),
                 text_preview=document.content[:500],
+                chunk_count=self._get_chunk_count(
+                    document.id
+                ),
             )
             for document in documents
         ]
+
+    def _replace_chunks(
+        self,
+        document: Document,
+    ) -> int:
+        self.db.execute(
+            delete(Chunk).where(
+                Chunk.document_id == document.id
+            )
+        )
+
+        chunks = chunk_text(
+            document.content,
+        )
+
+        for index, (
+            content,
+            start_position,
+            end_position,
+        ) in enumerate(chunks):
+            self.db.add(
+                Chunk(
+                    document_id=document.id,
+                    chunk_index=index,
+                    content=content,
+                    start_position=start_position,
+                    end_position=end_position,
+                )
+            )
+
+        logger.info(
+            "Created %d chunks for %s",
+            len(chunks),
+            document.name,
+        )
+
+        return len(chunks)
+
+    def _get_chunk_count(
+        self,
+        document_id: int,
+    ) -> int:
+        return len(
+            self.db.scalars(
+                select(Chunk).where(
+                    Chunk.document_id == document_id
+                )
+            ).all()
+        )

@@ -22,6 +22,7 @@ interface IndexedDocument {
   extension: string
   text_length: number
   text_preview: string
+  chunk_count: number
 }
 
 interface SyncResult {
@@ -309,7 +310,9 @@ onMounted(() => {
 
             <div class="indexed-preview">
               <span>
-                {{ document.text_length }} characters extracted
+                {{ document.text_length }} characters ·
+                {{ document.chunk_count }}
+                chunk{{ document.chunk_count === 1 ? '' : 's' }}
               </span>
 
               <pre>{{ document.text_preview }}</pre>
