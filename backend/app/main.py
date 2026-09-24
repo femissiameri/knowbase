@@ -63,10 +63,7 @@ async def upload_files(
         # the backend. We intentionally do not persist it yet.
         content = await file.read()
 
-        text = ""
-
-        if extension in {".md", ".txt", ".pdf"}:
-            text = extract_text(filename, content)
+        text = extract_text(filename, content)
 
         documents.append(
             FileMetadata(
