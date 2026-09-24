@@ -4,6 +4,7 @@ from pathlib import PurePosixPath
 
 from fastapi import FastAPI, File, UploadFile, Form
 from pydantic import BaseModel
+from app.services.document_parser import extract_text
 
 app = FastAPI()
 
@@ -22,6 +23,8 @@ class FileMetadata(BaseModel):
     size: int
     content_type: str | None
     extension: str
+    text_length: int
+    text_preview: str
 
 
 class FilesResponse(BaseModel):
@@ -60,6 +63,11 @@ async def upload_files(
         # the backend. We intentionally do not persist it yet.
         content = await file.read()
 
+        text = ""
+
+        if extension in {".md", ".txt", ".pdf"}:
+            text = extract_text(filename, content)
+
         documents.append(
             FileMetadata(
                 name=filename,
@@ -67,6 +75,8 @@ async def upload_files(
                 size=len(content),
                 content_type=file.content_type,
                 extension=extension,
+                text_length=len(text),
+                text_preview=text[:500]
             )
         )
 

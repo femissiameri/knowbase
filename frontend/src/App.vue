@@ -15,6 +15,8 @@ interface IndexedFile {
   size: number
   content_type: string | null
   extension: string
+  text_length: number
+  text_preview: string
 }
 
 const supportedExtensions = new Set(['txt', 'md', 'pdf', 'doc', 'docx']);
@@ -230,8 +232,16 @@ async function indexFiles() {
             :key="document.path"
             class="indexed-row"
           >
+          <div class="indexed-row">
             <span>{{ document.name }}</span>
             <span>{{ formatFileSize(document.size) }}</span>
+          </div>
+
+          <div class="indexed-preview">
+            <span>{{ document.text_length }} characters extracted</span>
+
+            <pre>{{ document.text_preview }}</pre>
+          </div>
           </div>
         </div>
       </div>
