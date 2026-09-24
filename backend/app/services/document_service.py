@@ -148,3 +148,24 @@ class DocumentService:
             text_length=len(document.content),
             text_preview=document.content[:500],
         )
+
+    def list_documents(self) -> list[DocumentMetadata]:
+        documents = self.db.scalars(
+            select(Document).order_by(
+                Document.updated_at.desc()
+            )
+        ).all()
+
+        return [
+            DocumentMetadata(
+                id=document.id,
+                name=document.name,
+                path=document.path,
+                size=document.size,
+                content_type=document.content_type,
+                extension=document.extension,
+                text_length=len(document.content),
+                text_preview=document.content[:500],
+            )
+            for document in documents
+        ]

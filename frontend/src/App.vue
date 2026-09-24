@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import {
+  computed,
+  onMounted,
+  ref,
+} from 'vue'
 
 interface LocalFile {
   name: string
@@ -10,6 +14,7 @@ interface LocalFile {
 
 
 interface IndexedDocument {
+  id: number
   name: string
   path: string
   size: number
@@ -23,11 +28,39 @@ const supportedExtensions = new Set(['txt', 'md', 'pdf', 'docx']);
 
 const folderInput = ref<HTMLInputElement | null>(null)
 const files = ref<LocalFile[]>([])
-const folderName = ref<string|undefined>('')
+const folderName = ref<string | undefined>('')
 
 const isIndexing = ref(false)
 const indexError = ref('')
 const indexedDocuments = ref<IndexedDocument[]>([])
+
+const isLoadingDocuments = ref(false)
+
+async function loadDocuments() {
+  isLoadingDocuments.value = true
+  indexError.value = ''
+
+  try {
+    const response = await fetch('/api/documents')
+
+    if (!response.ok) {
+      throw new Error(
+        `Backend returned ${response.status}`,
+      )
+    }
+
+    const data = await response.json()
+
+    indexedDocuments.value = data.documents
+  } catch (error) {
+    indexError.value =
+      error instanceof Error
+        ? error.message
+        : 'Failed to load documents.'
+  } finally {
+    isLoadingDocuments.value = false
+  }
+}
 
 
 const supportedFiles = computed(() => {
@@ -80,7 +113,7 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-async function indexFiles() {
+async function indexDocuments() {
   if (supportedFiles.value.length === 0) {
     return
   }
@@ -146,6 +179,10 @@ async function indexFiles() {
     isIndexing.value = false
   }
 }
+
+onMounted(() => {
+  loadDocuments()
+})
 </script>
 
 <template>
@@ -160,15 +197,7 @@ async function indexFiles() {
         staying on your machine.
       </p>
 
-      <input
-        ref="folderInput"
-        type="file"
-        webkitdirectory
-        directory
-        multiple
-        hidden
-        @change="handleFolderChange"
-      />
+      <input ref="folderInput" type="file" webkitdirectory directory multiple hidden @change="handleFolderChange" />
 
       <button class="select-button" type="button" @click="openFolderPicker">
         Select a folder
@@ -205,46 +234,70 @@ async function indexFiles() {
           </div>
         </div>
 
-      <button
-          v-if="supportedFiles.length > 0"
-          class="index-button"
-          type="button"
-          :disabled="isIndexing"
-          @click="indexFiles"
-        >
+        <button v-if="supportedFiles.length > 0" class="index-button" type="button" :disabled="isIndexing"
+          @click="indexDocuments">
           {{ isIndexing ? 'Indexing...' : 'Index documents' }}
         </button>
 
         <p v-if="indexError" class="error-message">
           {{ indexError }}
         </p>
+      </div>
 
-        <div
-          v-if="indexedDocuments.length > 0"
-          class="indexed-section"
-        >
-          <p class="indexed-title">
-            Backend received {{ indexedDocuments.length }} documents
-          </p>
+      <section class="indexed-section">
+        <div class="indexed-header">
+          <div>
+            <p class="indexed-title">Knowledge base</p>
 
-          <div
-            v-for="document in indexedDocuments"
-            :key="document.path"
-            class="indexed-row"
-          >
-          <div class="indexed-row">
-            <span>{{ document.name }}</span>
-            <span>{{ formatFileSize(document.size) }}</span>
-          </div>
+            <p class="indexed-count">
+              <template v-if="isLoadingDocuments">
+                Loading documents...
+              </template>
 
-          <div class="indexed-preview">
-            <span>{{ document.text_length }} characters extracted</span>
-
-            <pre>{{ document.text_preview }}</pre>
-          </div>
+              <template v-else>
+                {{ indexedDocuments.length }}
+                document{{ indexedDocuments.length === 1 ? '' : 's' }}
+              </template>
+            </p>
           </div>
         </div>
-      </div>
+
+        <div v-if="!isLoadingDocuments && indexedDocuments.length === 0" class="empty-state">
+          <p>Your knowledge base is empty.</p>
+
+          <span>
+            Select a folder and index some documents to get started.
+          </span>
+        </div>
+
+        <div v-else-if="!isLoadingDocuments" class="indexed-list">
+          <div v-for="document in indexedDocuments" :key="document.id" class="indexed-document">
+            <div class="indexed-row">
+              <div class="file-info">
+                <span class="file-name">
+                  {{ document.name }}
+                </span>
+
+                <span class="file-path">
+                  {{ document.path }}
+                </span>
+              </div>
+
+              <span class="file-size">
+                {{ formatFileSize(document.size) }}
+              </span>
+            </div>
+
+            <div class="indexed-preview">
+              <span>
+                {{ document.text_length }} characters extracted
+              </span>
+
+              <pre>{{ document.text_preview }}</pre>
+            </div>
+          </div>
+        </div>
+      </section>
     </section>
   </main>
 </template>

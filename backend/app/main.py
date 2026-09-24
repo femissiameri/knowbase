@@ -34,6 +34,23 @@ async def health():
     }
 
 
+@app.get(
+    "/api/documents",
+    response_model=DocumentsResponse,
+)
+async def list_documents(
+    db: Session = Depends(get_db),
+):
+    service = DocumentService(db)
+
+    documents = service.list_documents()
+
+    return DocumentsResponse(
+        total=len(documents),
+        documents=documents,
+    )
+
+
 @app.post(
     "/api/documents",
     response_model=DocumentsResponse,
