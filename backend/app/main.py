@@ -1,23 +1,35 @@
-from typing import Annotated
+import hashlib
 import json
 from pathlib import PurePosixPath
+from typing import Annotated
 
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import Depends, FastAPI, File, Form, UploadFile
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.database import Base, engine, get_db
+from app.models import Document
+
 from app.services.document_parser import extract_text
 
-app = FastAPI()
+app = FastAPI(
+    title="KnowBase API",
+    version="0.1.0",
+)
+
+Base.metadata.create_all(bind=engine)
 
 
 SUPPORTED_EXTENSIONS = {
     '.md',
     '.txt',
     '.pdf',
-    '.doc',
     '.docx',
 }
 
 class FileMetadata(BaseModel):
+    id: int
     name: str
     path: str
     size: int
@@ -44,6 +56,7 @@ async def health():
 async def upload_files(
     files: Annotated[list[UploadFile], File()],
     metadata: Annotated[str, Form()],
+    db: Session = Depends(get_db),
 ):
     metadata_list = json.loads(metadata)
 
@@ -65,19 +78,59 @@ async def upload_files(
 
         text = extract_text(filename, content)
 
+        content_hash = hashlib.sha256(
+            content
+        ).hexdigest()
+
+        existing_document = db.scalar(
+            select(Document).where(
+                Document.path == file_metadata["path"]
+            )
+        )
+
+        if existing_document:
+            existing_document.name = filename
+            existing_document.extension = extension
+            existing_document.content_type = file.content_type
+            existing_document.size = len(content)
+            existing_document.content = text
+            existing_document.content_hash = content_hash
+
+            document = existing_document
+
+
+        else:
+            document = Document(
+                name=filename,
+                path=file_metadata["path"],
+                extension=extension,
+                content_type=file.content_type,
+                size=len(content),
+                content=text,
+                content_hash=content_hash,
+            )
+
+            db.add(document)
+
+
+        db.flush()
+
         documents.append(
             FileMetadata(
-                name=filename,
-                path=file_metadata['path'],
-                size=len(content),
-                content_type=file.content_type,
-                extension=extension,
-                text_length=len(text),
-                text_preview=text[:500]
+                id=document.id,
+                name=document.name,
+                path=document.path,
+                size=document.size,
+                content_type=document.content_type,
+                extension=document.extension,
+                text_length=len(document.content),
+                text_preview=document.content[:500],
             )
         )
 
         await file.close()
+
+    db.commit()
 
     return FilesResponse(
         total=len(documents),

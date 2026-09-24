@@ -19,7 +19,7 @@ interface IndexedFile {
   text_preview: string
 }
 
-const supportedExtensions = new Set(['txt', 'md', 'pdf', 'doc', 'docx']);
+const supportedExtensions = new Set(['txt', 'md', 'pdf', 'docx']);
 
 const folderInput = ref<HTMLInputElement | null>(null)
 const files = ref<LocalFile[]>([])
