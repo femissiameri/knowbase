@@ -9,7 +9,7 @@ interface LocalFile {
 }
 
 
-interface IndexedFile {
+interface IndexedDocument {
   name: string
   path: string
   size: number
@@ -27,7 +27,7 @@ const folderName = ref<string|undefined>('')
 
 const isIndexing = ref(false)
 const indexError = ref('')
-const indexedFiles = ref<IndexedFile[]>([])
+const indexedDocuments = ref<IndexedDocument[]>([])
 
 
 const supportedFiles = computed(() => {
@@ -125,7 +125,7 @@ async function indexFiles() {
 
     formData.append('metadata', JSON.stringify(metadata))
 
-    const response = await fetch('/api/files', {
+    const response = await fetch('/api/documents', {
       method: 'POST',
       body: formData,
     })
@@ -136,7 +136,7 @@ async function indexFiles() {
 
     const data = await response.json()
 
-    indexedFiles.value = data.files
+    indexedDocuments.value = data.documents
   } catch (error) {
     indexError.value =
       error instanceof Error
@@ -220,15 +220,15 @@ async function indexFiles() {
         </p>
 
         <div
-          v-if="indexedFiles.length > 0"
+          v-if="indexedDocuments.length > 0"
           class="indexed-section"
         >
           <p class="indexed-title">
-            Backend received {{ indexedFiles.length }} documents
+            Backend received {{ indexedDocuments.length }} documents
           </p>
 
           <div
-            v-for="document in indexedFiles"
+            v-for="document in indexedDocuments"
             :key="document.path"
             class="indexed-row"
           >
