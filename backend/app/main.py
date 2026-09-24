@@ -5,7 +5,12 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
-from app.database import Base, engine, get_db
+from app.database import (
+    Base,
+    engine,
+    get_db,
+    initialize_fts,
+)
 from app.schemas import (
     DocumentsResponse,
     SearchResponse,
@@ -29,6 +34,7 @@ app = FastAPI(
 
 
 Base.metadata.create_all(bind=engine)
+initialize_fts()
 
 
 @app.get("/api/health")
