@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Document
-from app.schemas import DocumentMetadata
+from app.schemas import DocumentMetadata, SyncResult
 from app.services.document_parser import extract_text
 
 
@@ -27,11 +27,12 @@ class DocumentService:
     def __init__(self, db: Session):
         self.db = db
 
-    async def index_documents(
+    async def sync_documents(
         self,
         files: list[UploadFile],
         metadata: str,
-    ) -> list[DocumentMetadata]:
+        folder_name: str,
+    ) -> SyncResult:
         metadata_list = json.loads(metadata)
 
         if len(metadata_list) != len(files):
@@ -39,39 +40,62 @@ class DocumentService:
                 "The number of files does not match the metadata."
             )
 
-        documents: list[DocumentMetadata] = []
+        created = 0
+        updated = 0
+        unchanged = 0
 
-        logger.info(
-            "Received %d files",
-            len(files),
-        )
+        current_paths: set[str] = set()
 
         for index, file in enumerate(files):
-            try:
-                document_metadata = metadata_list[index]
+            document_metadata = metadata_list[index]
 
-                document = await self._index_document(
-                    file=file,
-                    metadata=document_metadata,
-                )
+            path = document_metadata["path"]
 
-                if document is not None:
-                    documents.append(document)
+            current_paths.add(path)
 
-            finally:
-                await file.close()
+            result = await self._sync_document(
+                file=file,
+                metadata=document_metadata,
+            )
+
+            if result == "created":
+                created += 1
+
+            elif result == "updated":
+                updated += 1
+
+            elif result == "unchanged":
+                unchanged += 1
+
+        deleted = self._delete_missing_documents(
+            folder_name=folder_name,
+            current_paths=current_paths,
+        )
 
         self.db.commit()
 
-        return documents
+        documents = self.list_documents(
+            folder_name=folder_name,
+        )
 
-    async def _index_document(
+        return SyncResult(
+            created=created,
+            updated=updated,
+            unchanged=unchanged,
+            deleted=deleted,
+            documents=documents,
+        )
+
+    async def _sync_document(
         self,
         file: UploadFile,
         metadata: dict,
-    ) -> DocumentMetadata | None:
+    ) -> str:
         filename = file.filename or "unknown"
-        extension = PurePosixPath(filename).suffix.lower()
+
+        extension = PurePosixPath(
+            filename
+        ).suffix.lower()
 
         logger.info(
             "Processing: %s",
@@ -84,14 +108,9 @@ class DocumentService:
                 filename,
             )
 
-            return None
+            return "unchanged"
 
         content = await file.read()
-
-        text = extract_text(
-            filename,
-            content,
-        )
 
         content_hash = hashlib.sha256(
             content
@@ -103,6 +122,24 @@ class DocumentService:
             )
         )
 
+        # File exists and content has not changed.
+        if (
+            existing_document
+            and existing_document.content_hash
+            == content_hash
+        ):
+            logger.info(
+                "Unchanged: %s",
+                filename,
+            )
+
+            return "unchanged"
+
+        text = extract_text(
+            filename,
+            content,
+        )
+
         if existing_document:
             existing_document.name = filename
             existing_document.extension = extension
@@ -111,49 +148,76 @@ class DocumentService:
             existing_document.content = text
             existing_document.content_hash = content_hash
 
-            document = existing_document
-
             logger.info(
-                "Updated document: %s",
+                "Updated: %s",
                 filename,
             )
 
-        else:
-            document = Document(
-                name=filename,
-                path=metadata["path"],
-                extension=extension,
-                content_type=file.content_type,
-                size=len(content),
-                content=text,
-                content_hash=content_hash,
-            )
+            return "updated"
 
-            self.db.add(document)
-
-            logger.info(
-                "Created document: %s",
-                filename,
-            )
-
-        self.db.flush()
-
-        return DocumentMetadata(
-            id=document.id,
-            name=document.name,
-            path=document.path,
-            size=document.size,
-            content_type=document.content_type,
-            extension=document.extension,
-            text_length=len(document.content),
-            text_preview=document.content[:500],
+        document = Document(
+            name=filename,
+            path=metadata["path"],
+            extension=extension,
+            content_type=file.content_type,
+            size=len(content),
+            content=text,
+            content_hash=content_hash,
         )
 
-    def list_documents(self) -> list[DocumentMetadata]:
-        documents = self.db.scalars(
-            select(Document).order_by(
-                Document.updated_at.desc()
+        self.db.add(document)
+
+        logger.info(
+            "Created: %s",
+            filename,
+        )
+
+        return "created"
+
+    def _delete_missing_documents(
+        self,
+        folder_name: str,
+        current_paths: set[str],
+    ) -> int:
+        prefix = f"{folder_name}/"
+
+        stored_documents = self.db.scalars(
+            select(Document).where(
+                Document.path.like(f"{prefix}%")
             )
+        ).all()
+
+        deleted = 0
+
+        for document in stored_documents:
+            if document.path not in current_paths:
+                logger.info(
+                    "Deleted: %s",
+                    document.path,
+                )
+
+                self.db.delete(document)
+                deleted += 1
+
+        return deleted
+
+    def list_documents(
+        self,
+        folder_name: str | None = None,
+    ) -> list[DocumentMetadata]:
+        query = select(Document).order_by(
+            Document.updated_at.desc()
+        )
+
+        if folder_name:
+            query = query.where(
+                Document.path.like(
+                    f"{folder_name}/%"
+                )
+            )
+
+        documents = self.db.scalars(
+            query
         ).all()
 
         return [

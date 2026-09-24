@@ -24,11 +24,19 @@ interface IndexedDocument {
   text_preview: string
 }
 
+interface SyncResult {
+  created: number
+  updated: number
+  unchanged: number
+  deleted: number
+  documents: IndexedDocument[]
+}
+
 const supportedExtensions = new Set(['txt', 'md', 'pdf', 'docx']);
 
 const folderInput = ref<HTMLInputElement | null>(null)
 const files = ref<LocalFile[]>([])
-const folderName = ref<string | undefined>('')
+const folderName = ref<string>('')
 
 const isIndexing = ref(false)
 const indexError = ref('')
@@ -94,7 +102,7 @@ function handleFolderChange(event: Event) {
   const firstPath = selectedFiles.length > 0 ? selectedFiles[0]?.webkitRelativePath : undefined
 
   if (firstPath) {
-    folderName.value = firstPath.split('/')[0]
+    folderName.value = firstPath.split('/')[0] || ''
   } else {
     folderName.value = 'Selected folder'
   }
@@ -157,8 +165,9 @@ async function indexDocuments() {
     }
 
     formData.append('metadata', JSON.stringify(metadata))
+    formData.append('folder_name', folderName.value)
 
-    const response = await fetch('/api/documents', {
+    const response = await fetch('/api/documents/sync', {
       method: 'POST',
       body: formData,
     })
@@ -169,7 +178,17 @@ async function indexDocuments() {
 
     const data = await response.json()
 
-    indexedDocuments.value = data.documents
+    const result = data as SyncResult
+
+    indexedDocuments.value = result.documents
+
+    console.log('Sync result:', {
+      created: result.created,
+      updated: result.updated,
+      unchanged: result.unchanged,
+      deleted: result.deleted,
+    })
+
   } catch (error) {
     indexError.value =
       error instanceof Error

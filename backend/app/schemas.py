@@ -15,3 +15,11 @@ class DocumentMetadata(BaseModel):
 class DocumentsResponse(BaseModel):
     total: int
     documents: list[DocumentMetadata]
+
+
+class SyncResult(BaseModel):
+    created: int
+    updated: int
+    unchanged: int
+    deleted: int
+    documents: list[DocumentMetadata]

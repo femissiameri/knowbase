@@ -6,7 +6,7 @@ from fastapi import Depends, FastAPI, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
-from app.schemas import DocumentsResponse
+from app.schemas import DocumentsResponse, SyncResult
 from app.services.document_service import DocumentService
 
 
@@ -52,22 +52,19 @@ async def list_documents(
 
 
 @app.post(
-    "/api/documents",
-    response_model=DocumentsResponse,
+    "/api/documents/sync",
+    response_model=SyncResult,
 )
-async def upload_documents(
+async def sync_documents(
     files: Annotated[list[UploadFile], File()],
     metadata: Annotated[str, Form()],
+    folder_name: Annotated[str, Form()],
     db: Session = Depends(get_db),
 ):
     service = DocumentService(db)
 
-    documents = await service.index_documents(
+    return await service.sync_documents(
         files=files,
         metadata=metadata,
-    )
-
-    return DocumentsResponse(
-        total=len(documents),
-        documents=documents,
+        folder_name=folder_name,
     )
