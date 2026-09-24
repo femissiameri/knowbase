@@ -39,3 +39,19 @@ class SearchResponse(BaseModel):
     query: str
     total: int
     results: list[SearchResult]
+
+
+class SemanticSearchResult(BaseModel):
+    chunk_id: int
+    document_id: int
+    document_name: str
+    document_path: str
+    chunk_index: int
+    content: str
+    similarity: float
+
+
+class SemanticSearchResponse(BaseModel):
+    query: str
+    total: int
+    results: list[SemanticSearchResult]

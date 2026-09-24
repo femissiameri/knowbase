@@ -14,7 +14,11 @@ from app.database import (
 from app.schemas import (
     DocumentsResponse,
     SearchResponse,
+    SemanticSearchResponse,
     SyncResult,
+)
+from app.services.semantic_search_service import (
+    SemanticSearchService,
 )
 from app.services.search_service import SearchService
 from app.services.document_service import DocumentService
@@ -94,6 +98,24 @@ async def search_documents(
     results = service.search(q)
 
     return SearchResponse(
+        query=q,
+        total=len(results),
+        results=results,
+    )
+
+@app.get(
+    "/api/search/semantic",
+    response_model=SemanticSearchResponse,
+)
+async def semantic_search(
+    q: str,
+    db: Session = Depends(get_db),
+):
+    service = SemanticSearchService(db)
+
+    results = service.search(q)
+
+    return SemanticSearchResponse(
         query=q,
         total=len(results),
         results=results,

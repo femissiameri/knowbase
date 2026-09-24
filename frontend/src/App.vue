@@ -42,6 +42,19 @@ interface SearchResult {
   content: string
 }
 
+interface SemanticSearchResult {
+  chunk_id: number
+  document_id: number
+  document_name: string
+  document_path: string
+  chunk_index: number
+  content: string
+  similarity: number
+}
+
+const semanticResults = ref<SemanticSearchResult[]>([])
+const isSemanticSearching = ref(false)
+
 const searchQuery = ref('')
 const searchResults = ref<SearchResult[]>([])
 const isSearching = ref(false)
@@ -249,6 +262,46 @@ async function searchDocuments() {
   }
 }
 
+async function semanticSearchDocuments() {
+  const query = searchQuery.value.trim()
+
+  if (!query) {
+    semanticResults.value = []
+    return
+  }
+
+  isSemanticSearching.value = true
+  searchError.value = ''
+
+  try {
+    const response = await fetch(
+      `/api/search/semantic?q=${encodeURIComponent(query)}`,
+    )
+
+    if (!response.ok) {
+      throw new Error(
+        `Backend returned ${response.status}`,
+      )
+    }
+
+    const data = await response.json()
+
+    semanticResults.value = data.results
+
+    console.log(
+      'Semantic search:',
+      semanticResults.value,
+    )
+  } catch (error) {
+    searchError.value =
+      error instanceof Error
+        ? error.message
+        : 'Semantic search failed.'
+  } finally {
+    isSemanticSearching.value = false
+  }
+}
+
 onMounted(() => {
   loadDocuments()
 })
@@ -280,6 +333,15 @@ onMounted(() => {
 
           <button type="button" :disabled="isSearching" @click="searchDocuments">
             {{ isSearching ? 'Searching...' : 'Search' }}
+          </button>
+
+
+          <button type="button" :disabled="isSemanticSearching" @click="semanticSearchDocuments">
+            {{
+              isSemanticSearching
+                ? 'Searching...'
+                : 'Semantic search'
+            }}
           </button>
         </div>
 
@@ -408,6 +470,35 @@ onMounted(() => {
           </div>
         </div>
       </section>
+
+      <div v-if="semanticResults.length > 0" class="search-results">
+        <div v-for="result in semanticResults" :key="result.chunk_id" class="search-result">
+          <div class="search-result-header">
+            <div>
+              <p class="search-result-title">
+                {{ result.document_name }}
+              </p>
+
+              <p class="search-result-path">
+                {{ result.document_path }}
+              </p>
+            </div>
+
+            <span class="search-result-chunk">
+              {{ result.chunk_index + 1 }}
+            </span>
+          </div>
+
+          <div class="similarity">
+            Similarity:
+            {{ result.similarity.toFixed(3) }}
+          </div>
+
+          <p class="search-result-content">
+            {{ result.content }}
+          </p>
+        </div>
+      </div>
     </section>
   </main>
 </template>
