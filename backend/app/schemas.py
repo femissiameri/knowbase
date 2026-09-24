@@ -33,6 +33,8 @@ class SearchResult(BaseModel):
     document_path: str
     chunk_index: int
     content: str
+    page_number: int | None
+    section: str | None
 
 
 class SearchResponse(BaseModel):
@@ -48,6 +50,8 @@ class SemanticSearchResult(BaseModel):
     document_path: str
     chunk_index: int
     content: str
+    page_number: int | None
+    section: str | None
     similarity: float
 
 
@@ -64,6 +68,8 @@ class HybridSearchResult(BaseModel):
     document_path: str
     chunk_index: int
     content: str
+    page_number: int | None
+    section: str | None
     similarity: float | None
     matched_by: list[str]
 

@@ -16,7 +16,12 @@ from app.services.embedding_service import (
     EmbeddingService,
 )
 from app.schemas import DocumentMetadata, SyncResult
-from app.services.document_parser import extract_text
+from app.services.document_parser import (
+    extract_pages,
+)
+from app.services.chunker import (
+    chunk_pages,
+)
 from app.services.chunker import chunk_text
 
 
@@ -157,9 +162,14 @@ class DocumentService:
 
             return "unchanged"
 
-        text = extract_text(
+        pages = extract_pages(
             filename,
             content,
+        )
+
+        text = "\n\n".join(
+            page.text
+            for page in pages
         )
 
         if existing_document:
@@ -174,7 +184,10 @@ class DocumentService:
 
             self.db.flush()
 
-            self._replace_chunks(document)
+            self._replace_chunks(
+                document,
+                pages,
+            )
 
             embedding_count = (
                 self.embedding_service
@@ -210,7 +223,10 @@ class DocumentService:
 
         self.db.flush()
 
-        self._replace_chunks(document)
+        self._replace_chunks(
+            document,
+            pages,
+        )
 
         embedding_count = (
             self.embedding_service
@@ -318,6 +334,7 @@ class DocumentService:
     def _replace_chunks(
         self,
         document: Document,
+        pages,
     ) -> int:
         chunk_ids = select(
             Chunk.id
@@ -341,14 +358,16 @@ class DocumentService:
             )
         )
 
-        chunks = chunk_text(
-            document.content,
+        chunks = chunk_pages(
+            pages
         )
 
         for index, (
             content,
             start_position,
             end_position,
+            page_number,
+            section,
         ) in enumerate(chunks):
             self.db.add(
                 Chunk(
@@ -357,6 +376,8 @@ class DocumentService:
                     content=content,
                     start_position=start_position,
                     end_position=end_position,
+                    page_number=page_number,
+                    section=section,
                 )
             )
 

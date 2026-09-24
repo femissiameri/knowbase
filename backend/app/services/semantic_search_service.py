@@ -84,6 +84,8 @@ class SemanticSearchService:
                         document_path=document.path,
                         chunk_index=chunk.chunk_index,
                         content=chunk.content,
+                        page_number=chunk.page_number,
+                        section=chunk.section,
                         similarity=similarity,
                     ),
                 )

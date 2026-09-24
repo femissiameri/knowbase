@@ -36,6 +36,8 @@ interface SearchResult {
   document_name: string
   document_path: string
   chunk_index: number
+  page_number: number | null
+  section: string | null
   content: string
 }
 
@@ -659,38 +661,25 @@ onMounted(() => {
       </div>
 
       <nav class="main-nav">
-        <button
-          type="button"
-          class="nav-button"
-          :class="{
-            active:
-              activeTab === 'search',
-          }"
-          @click="
+        <button type="button" class="nav-button" :class="{
+          active:
+            activeTab === 'search',
+        }" @click="
             activeTab = 'search'
-          "
-        >
+            ">
           Search
         </button>
 
-        <button
-          type="button"
-          class="nav-button"
-          :class="{
-            active:
-              activeTab ===
-              'documents',
-          }"
-          @click="
+        <button type="button" class="nav-button" :class="{
+          active:
+            activeTab ===
+            'documents',
+        }" @click="
             activeTab = 'documents'
-          "
-        >
+            ">
           Documents
 
-          <span
-            v-if="documentCount > 0"
-            class="nav-count"
-          >
+          <span v-if="documentCount > 0" class="nav-count">
             {{ documentCount }}
           </span>
         </button>
@@ -702,10 +691,7 @@ onMounted(() => {
            SEARCH
       ================================================== -->
 
-      <section
-        v-if="activeTab === 'search'"
-        class="page-section"
-      >
+      <section v-if="activeTab === 'search'" class="page-section">
         <div class="page-heading">
           <p class="eyebrow">
             KNOWLEDGE SEARCH
@@ -723,100 +709,62 @@ onMounted(() => {
         </div>
 
         <!-- Search -->
-        <form
-          class="search-panel"
-          @submit.prevent="
-            performSearch
-          "
-        >
-          <div
-            class="search-input-wrapper"
-          >
-            <span
-              class="search-icon"
-              aria-hidden="true"
-            >
+        <form class="search-panel" @submit.prevent="
+          performSearch
+        ">
+          <div class="search-input-wrapper">
+            <span class="search-icon" aria-hidden="true">
               ⌕
             </span>
 
-            <input
-              v-model="
-                searchQuery
-              "
-              type="search"
-              placeholder="What do you want to find?"
-              autocomplete="off"
-            />
+            <input v-model="searchQuery
+              " type="search" placeholder="What do you want to find?" autocomplete="off" />
 
             <kbd>Enter</kbd>
           </div>
 
-          <div
-            class="search-toolbar"
-          >
-            <div
-              class="search-modes"
-            >
-              <button
-                type="button"
-                class="mode-button"
-                :class="{
-                  active:
-                    searchMode ===
-                    'hybrid',
-                }"
-                @click="
+          <div class="search-toolbar">
+            <div class="search-modes">
+              <button type="button" class="mode-button" :class="{
+                active:
+                  searchMode ===
+                  'hybrid',
+              }" @click="
                   switchSearchMode(
                     'hybrid',
                   )
-                "
-              >
+                  ">
                 Hybrid
               </button>
 
-              <button
-                type="button"
-                class="mode-button"
-                :class="{
-                  active:
-                    searchMode ===
-                    'semantic',
-                }"
-                @click="
+              <button type="button" class="mode-button" :class="{
+                active:
+                  searchMode ===
+                  'semantic',
+              }" @click="
                   switchSearchMode(
                     'semantic',
                   )
-                "
-              >
+                  ">
                 Semantic
               </button>
 
-              <button
-                type="button"
-                class="mode-button"
-                :class="{
-                  active:
-                    searchMode ===
-                    'keyword',
-                }"
-                @click="
+              <button type="button" class="mode-button" :class="{
+                active:
+                  searchMode ===
+                  'keyword',
+              }" @click="
                   switchSearchMode(
                     'keyword',
                   )
-                "
-              >
+                  ">
                 Keyword
               </button>
             </div>
 
-            <button
-              type="submit"
-              class="primary-button"
-              :disabled="
-                isSearching ||
-                !searchQuery.trim()
-              "
-            >
+            <button type="submit" class="primary-button" :disabled="isSearching ||
+              !searchQuery.trim()
+              ">
               {{
                 isSearching
                   ? 'Searching...'
@@ -826,23 +774,15 @@ onMounted(() => {
           </div>
         </form>
 
-        <p
-          v-if="searchError"
-          class="error-message"
-        >
+        <p v-if="searchError" class="error-message">
           {{ searchError }}
         </p>
 
         <!-- Loading -->
-        <div
-          v-if="
-            isSearching
-          "
-          class="search-loading"
-        >
-          <div
-            class="loading-dot"
-          ></div>
+        <div v-if="
+          isSearching
+        " class="search-loading">
+          <div class="loading-dot"></div>
 
           <span>
             Searching your
@@ -851,19 +791,14 @@ onMounted(() => {
         </div>
 
         <!-- No results -->
-        <div
-          v-else-if="
-            !isSearching &&
-            searchQuery &&
-            currentSearchResults.length ===
-              0 &&
-            !searchError
-          "
-          class="empty-search"
-        >
-          <div
-            class="empty-icon"
-          >
+        <div v-else-if="
+          !isSearching &&
+          searchQuery &&
+          currentSearchResults.length ===
+          0 &&
+          !searchError
+        " class="empty-search">
+          <div class="empty-icon">
             ⌕
           </div>
 
@@ -883,33 +818,22 @@ onMounted(() => {
             for this query.
           </p>
 
-          <button
-            type="button"
-            class="secondary-button"
-            @click="
-              activeTab =
-                'documents'
-            "
-          >
+          <button type="button" class="secondary-button" @click="
+            activeTab =
+            'documents'
+            ">
             Manage documents
           </button>
         </div>
 
         <!-- Results -->
-        <div
-          v-else-if="
-            currentSearchResults.length >
-            0
-          "
-          class="results-section"
-        >
-          <div
-            class="results-header"
-          >
+        <div v-else-if="
+          currentSearchResults.length >
+          0
+        " class="results-section">
+          <div class="results-header">
             <div>
-              <p
-                class="section-label"
-              >
+              <p class="section-label">
                 RESULTS
               </p>
 
@@ -919,33 +843,27 @@ onMounted(() => {
                 }}
                 result{{
                   currentSearchResults.length ===
-                  1
+                    1
                     ? ''
                     : 's'
                 }}
               </h2>
             </div>
 
-            <div
-              class="results-info"
-            >
-              <span
-                class="results-mode"
-              >
+            <div class="results-info">
+              <span class="results-mode">
                 {{
                   searchMode ===
-                  'hybrid'
+                    'hybrid'
                     ? 'Hybrid search'
                     : searchMode ===
-                        'semantic'
+                      'semantic'
                       ? 'Semantic search'
                       : 'Keyword search'
                 }}
               </span>
 
-              <span
-                class="results-divider"
-              >
+              <span class="results-divider">
                 ·
               </span>
 
@@ -955,32 +873,18 @@ onMounted(() => {
             </div>
           </div>
 
-          <div
-            class="results-list"
-          >
-            <article
-              v-for="result in currentSearchResults"
-              :key="
-                result.chunk_id
-              "
-              class="result-card"
-              :class="{
+          <div class="results-list">
+            <article v-for="result in currentSearchResults" :key="result.chunk_id
+              " class="result-card" :class="{
                 expanded:
                   isResultExpanded(
                     result.chunk_id,
                   ),
-              }"
-            >
+              }">
               <!-- Result header -->
-              <div
-                class="result-card-top"
-              >
-                <div
-                  class="result-document"
-                >
-                  <div
-                    class="document-icon"
-                  >
+              <div class="result-card-top">
+                <div class="result-document">
+                  <div class="document-icon">
                     {{
                       getFileType(
                         result.document_name,
@@ -988,9 +892,7 @@ onMounted(() => {
                     }}
                   </div>
 
-                  <div
-                    class="result-document-info"
-                  >
+                  <div class="result-document-info">
                     <h3>
                       {{
                         result.document_name
@@ -1005,27 +907,18 @@ onMounted(() => {
                   </div>
                 </div>
 
-                <div
-                  class="result-badges"
-                >
-                  <span
-                    v-for="method in getMatchedBy(
-                      result,
-                    )"
-                    :key="method"
-                    class="match-badge"
-                  >
+                <div class="result-badges">
+                  <span v-for="method in getMatchedBy(
+                    result,
+                  )" :key="method" class="match-badge">
                     {{ method }}
                   </span>
 
-                  <span
-                    v-if="
-                      getSimilarity(
-                        result,
-                      ) !== null
-                    "
-                    class="similarity-badge"
-                  >
+                  <span v-if="
+                    getSimilarity(
+                      result,
+                    ) !== null
+                  " class="similarity-badge">
                     {{
                       formatResultSimilarity(
                         result,
@@ -1036,68 +929,64 @@ onMounted(() => {
               </div>
 
               <!-- Metadata -->
-              <div
-                class="result-meta"
-              >
+              <div class="result-meta">
                 <span>
                   Chunk
-                  {{
-                    result.chunk_index +
-                    1
-                  }}
+                  {{ result.chunk_index + 1 }}
                 </span>
 
-                <span>
-                  ·
-                </span>
+                <template v-if="
+                  'page_number' in result &&
+                  result.page_number !== null
+                ">
+                  <span>·</span>
 
-                <span>
-                  {{
-                    result.content.length
-                  }}
-                  characters
-                </span>
+                  <span>
+                    Page {{ result.page_number }}
+                  </span>
+                </template>
+
+                <template v-if="
+                  'section' in result &&
+                  result.section
+                ">
+                  <span>·</span>
+
+                  <span>
+                    {{ result.section }}
+                  </span>
+                </template>
               </div>
 
               <!-- Content -->
-              <div
-                class="result-content"
-                :class="{
-                  collapsed:
-                    !isResultExpanded(
-                      result.chunk_id,
-                    ),
-                }"
-              >
+              <div class="result-content" :class="{
+                collapsed:
+                  !isResultExpanded(
+                    result.chunk_id,
+                  ),
+              }">
                 {{
                   isResultExpanded(
                     result.chunk_id,
                   )
                     ? result.content
                     : getResultPreview(
-                        result.content,
-                      )
+                      result.content,
+                    )
                 }}
               </div>
 
               <!-- Footer -->
-              <div
-                class="result-footer"
-              >
-                <button
-                  v-if="
-                    isLongResult(
-                      result.content,
-                    )
-                  "
-                  type="button"
-                  class="text-button"
-                  @click="
+              <div class="result-footer">
+                <button v-if="
+                  isLongResult(
+                    result.content,
+                  )
+                " type="button" class="text-button" @click="
                     toggleResult(
                       result.chunk_id,
                     )
-                  "
-                >
+                    ">
                   {{
                     isResultExpanded(
                       result.chunk_id,
@@ -1107,11 +996,7 @@ onMounted(() => {
                   }}
                 </button>
 
-                <button
-                  type="button"
-                  class="source-button"
-                  title="Source navigation will be implemented later"
-                >
+                <button type="button" class="source-button" title="Source navigation will be implemented later">
                   View source →
                 </button>
               </div>
@@ -1120,14 +1005,11 @@ onMounted(() => {
         </div>
 
         <!-- Empty knowledge base -->
-        <div
-          v-else-if="
-            !isLoadingDocuments &&
-            indexedDocuments.length ===
-              0
-          "
-          class="search-empty-state"
-        >
+        <div v-else-if="
+          !isLoadingDocuments &&
+          indexedDocuments.length ===
+          0
+        " class="search-empty-state">
           <p class="section-label">
             GET STARTED
           </p>
@@ -1143,14 +1025,10 @@ onMounted(() => {
             to search them.
           </p>
 
-          <button
-            type="button"
-            class="secondary-button"
-            @click="
-              activeTab =
-                'documents'
-            "
-          >
+          <button type="button" class="secondary-button" @click="
+            activeTab =
+            'documents'
+            ">
             Add documents
           </button>
         </div>
@@ -1160,13 +1038,8 @@ onMounted(() => {
            DOCUMENTS
       ================================================== -->
 
-      <section
-        v-else
-        class="page-section"
-      >
-        <div
-          class="documents-heading"
-        >
+      <section v-else class="page-section">
+        <div class="documents-heading">
           <div>
             <p class="eyebrow">
               KNOWLEDGE BASE
@@ -1183,9 +1056,7 @@ onMounted(() => {
             </p>
           </div>
 
-          <div
-            class="document-stat"
-          >
+          <div class="document-stat">
             <strong>
               {{ documentCount }}
             </strong>
@@ -1193,7 +1064,7 @@ onMounted(() => {
             <span>
               indexed document{{
                 documentCount ===
-                1
+                  1
                   ? ''
                   : 's'
               }}
@@ -1201,30 +1072,19 @@ onMounted(() => {
           </div>
         </div>
 
-        <div
-          v-if="indexError"
-          class="error-message"
-        >
+        <div v-if="indexError" class="error-message">
           {{ indexError }}
         </div>
 
         <!-- Folder picker -->
-        <section
-          class="folder-card"
-        >
-          <div
-            class="folder-card-content"
-          >
-            <div
-              class="folder-icon"
-            >
+        <section class="folder-card">
+          <div class="folder-card-content">
+            <div class="folder-icon">
               📁
             </div>
 
             <div>
-              <p
-                class="section-label"
-              >
+              <p class="section-label">
                 LOCAL SOURCE
               </p>
 
@@ -1244,41 +1104,22 @@ onMounted(() => {
             </div>
           </div>
 
-          <button
-            type="button"
-            class="secondary-button"
-            @click="
-              openFolderPicker
-            "
-          >
+          <button type="button" class="secondary-button" @click="
+            openFolderPicker
+          ">
             Select folder
           </button>
 
-          <input
-            ref="folderInput"
-            type="file"
-            webkitdirectory
-            directory
-            multiple
-            hidden
-            @change="
-              handleFolderChange
-            "
-          />
+          <input ref="folderInput" type="file" webkitdirectory directory multiple hidden @change="
+            handleFolderChange
+          " />
         </section>
 
         <!-- Selected folder -->
-        <section
-          v-if="files.length > 0"
-          class="selected-folder"
-        >
-          <div
-            class="selected-folder-header"
-          >
+        <section v-if="files.length > 0" class="selected-folder">
+          <div class="selected-folder-header">
             <div>
-              <p
-                class="section-label"
-              >
+              <p class="section-label">
                 SELECTED FOLDER
               </p>
 
@@ -1287,9 +1128,7 @@ onMounted(() => {
               </h2>
             </div>
 
-            <div
-              class="file-stats"
-            >
+            <div class="file-stats">
               <span>
                 {{ files.length }}
                 total
@@ -1304,13 +1143,10 @@ onMounted(() => {
             </div>
           </div>
 
-          <div
-            v-if="
-              supportedFiles.length ===
-              0
-            "
-            class="empty-state"
-          >
+          <div v-if="
+            supportedFiles.length ===
+            0
+          " class="empty-state">
             <h3>
               No supported documents
             </h3>
@@ -1322,21 +1158,10 @@ onMounted(() => {
             </p>
           </div>
 
-          <div
-            v-else
-            class="file-list"
-          >
-            <div
-              v-for="file in supportedFiles"
-              :key="file.path"
-              class="file-row"
-            >
-              <div
-                class="file-main"
-              >
-                <div
-                  class="file-type"
-                >
+          <div v-else class="file-list">
+            <div v-for="file in supportedFiles" :key="file.path" class="file-row">
+              <div class="file-main">
+                <div class="file-type">
                   {{
                     getFileType(
                       file.name,
@@ -1344,26 +1169,18 @@ onMounted(() => {
                   }}
                 </div>
 
-                <div
-                  class="file-info"
-                >
-                  <p
-                    class="file-name"
-                  >
+                <div class="file-info">
+                  <p class="file-name">
                     {{ file.name }}
                   </p>
 
-                  <p
-                    class="file-path"
-                  >
+                  <p class="file-path">
                     {{ file.path }}
                   </p>
                 </div>
               </div>
 
-              <span
-                class="file-size"
-              >
+              <span class="file-size">
                 {{
                   formatFileSize(
                     file.size,
@@ -1374,9 +1191,7 @@ onMounted(() => {
           </div>
 
           <!-- Index action -->
-          <div
-            class="index-action"
-          >
+          <div class="index-action">
             <div>
               <strong>
                 Ready to synchronize
@@ -1390,18 +1205,12 @@ onMounted(() => {
               </p>
             </div>
 
-            <button
-              type="button"
-              class="primary-button"
-              :disabled="
-                isIndexing ||
-                supportedFiles.length ===
-                  0
-              "
-              @click="
+            <button type="button" class="primary-button" :disabled="isIndexing ||
+              supportedFiles.length ===
+              0
+              " @click="
                 indexDocuments
-              "
-            >
+              ">
               {{
                 isIndexing
                   ? 'Indexing...'
@@ -1412,14 +1221,9 @@ onMounted(() => {
         </section>
 
         <!-- Sync summary -->
-        <div
-          v-if="lastSync"
-          class="sync-summary"
-        >
+        <div v-if="lastSync" class="sync-summary">
           <div>
-            <span
-              class="sync-number"
-            >
+            <span class="sync-number">
               {{ lastSync.created }}
             </span>
 
@@ -1429,9 +1233,7 @@ onMounted(() => {
           </div>
 
           <div>
-            <span
-              class="sync-number"
-            >
+            <span class="sync-number">
               {{ lastSync.updated }}
             </span>
 
@@ -1441,9 +1243,7 @@ onMounted(() => {
           </div>
 
           <div>
-            <span
-              class="sync-number"
-            >
+            <span class="sync-number">
               {{ lastSync.unchanged }}
             </span>
 
@@ -1453,9 +1253,7 @@ onMounted(() => {
           </div>
 
           <div>
-            <span
-              class="sync-number"
-            >
+            <span class="sync-number">
               {{ lastSync.deleted }}
             </span>
 
@@ -1466,16 +1264,10 @@ onMounted(() => {
         </div>
 
         <!-- Indexed documents -->
-        <section
-          class="knowledge-section"
-        >
-          <div
-            class="section-header"
-          >
+        <section class="knowledge-section">
+          <div class="section-header">
             <div>
-              <p
-                class="section-label"
-              >
+              <p class="section-label">
                 INDEXED DOCUMENTS
               </p>
 
@@ -1483,7 +1275,7 @@ onMounted(() => {
                 {{ documentCount }}
                 document{{
                   documentCount ===
-                  1
+                    1
                     ? ''
                     : 's'
                 }}
@@ -1491,22 +1283,16 @@ onMounted(() => {
             </div>
           </div>
 
-          <div
-            v-if="
-              isLoadingDocuments
-            "
-            class="loading-state"
-          >
+          <div v-if="
+            isLoadingDocuments
+          " class="loading-state">
             Loading documents...
           </div>
 
-          <div
-            v-else-if="
-              indexedDocuments.length ===
-              0
-            "
-            class="empty-state"
-          >
+          <div v-else-if="
+            indexedDocuments.length ===
+            0
+          " class="empty-state">
             <h3>
               No documents indexed
               yet.
@@ -1519,23 +1305,11 @@ onMounted(() => {
             </p>
           </div>
 
-          <div
-            v-else
-            class="indexed-list"
-          >
-            <article
-              v-for="document in indexedDocuments"
-              :key="
-                document.id
-              "
-              class="indexed-card"
-            >
-              <div
-                class="indexed-card-main"
-              >
-                <div
-                  class="document-icon"
-                >
+          <div v-else class="indexed-list">
+            <article v-for="document in indexedDocuments" :key="document.id
+              " class="indexed-card">
+              <div class="indexed-card-main">
+                <div class="document-icon">
                   {{
                     getFileType(
                       document.name,
@@ -1543,9 +1317,7 @@ onMounted(() => {
                   }}
                 </div>
 
-                <div
-                  class="indexed-info"
-                >
+                <div class="indexed-info">
                   <h3>
                     {{
                       document.name
@@ -1560,9 +1332,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div
-                class="indexed-meta"
-              >
+              <div class="indexed-meta">
                 <span>
                   {{
                     document.chunk_count

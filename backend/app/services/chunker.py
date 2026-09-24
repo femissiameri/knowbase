@@ -1,5 +1,9 @@
 import re
 
+from app.services.document_parser import (
+    ExtractedPage,
+)
+
 
 DEFAULT_CHUNK_SIZE = 1200
 DEFAULT_CHUNK_OVERLAP = 200
@@ -148,3 +152,47 @@ def find_boundary(
         return max(valid_breaks)
 
     return target_end
+
+
+def chunk_pages(
+    pages: list[ExtractedPage],
+) -> list[
+    tuple[
+        str,
+        int,
+        int,
+        int | None,
+        str | None,
+    ]
+]:
+    chunks: list[
+        tuple[
+            str,
+            int,
+            int,
+            int | None,
+            str | None,
+        ]
+    ] = []
+
+    for page in pages:
+        page_chunks = chunk_text(
+            page.text
+        )
+
+        for (
+            content,
+            start_position,
+            end_position,
+        ) in page_chunks:
+            chunks.append(
+                (
+                    content,
+                    start_position,
+                    end_position,
+                    page.page_number,
+                    page.section,
+                )
+            )
+
+    return chunks

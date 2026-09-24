@@ -66,6 +66,8 @@ class SearchService:
                 document_path=row["document_path"],
                 chunk_index=row["chunk_index"],
                 content=row["content"],
+                page_number=row["page_number"],
+                section=row["section"],
             )
             for row in rows
         ]

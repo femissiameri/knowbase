@@ -83,6 +83,8 @@ class HybridSearchService:
                     document_path=result.document_path,
                     chunk_index=result.chunk_index,
                     content=result.content,
+                    page_number=result.page_number,
+                    section=result.section,
                     similarity=None,
                     matched_by=["keyword"],
                 )
@@ -128,6 +130,8 @@ class HybridSearchService:
                         document_path=result.document_path,
                         chunk_index=result.chunk_index,
                         content=result.content,
+                        page_number=result.page_number,
+                        section=result.section,
                         similarity=result.similarity,
                         matched_by=["semantic"],
                     )
