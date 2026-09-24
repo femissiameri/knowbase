@@ -12,15 +12,12 @@ dependencies = [
     "pymupdf>=1.28.2",
     "python-docx>=1.2.0",
     "python-multipart>=0.0.32",
+    "sentence-transformers>=6.1.0",
     "sqlalchemy>=2.0.54",
 ]
 
 [project.scripts]
 backend = "backend:main"
-
-[build-system]
-requires = ["uv_build>=0.12.18,<0.13.0"]
-build-backend = "uv_build"
 
 [tool.fastapi]
 entrypoint = "app.main:app"
