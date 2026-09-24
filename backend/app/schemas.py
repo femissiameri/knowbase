@@ -24,3 +24,18 @@ class SyncResult(BaseModel):
     unchanged: int
     deleted: int
     documents: list[DocumentMetadata]
+
+
+class SearchResult(BaseModel):
+    chunk_id: int
+    document_id: int
+    document_name: str
+    document_path: str
+    chunk_index: int
+    content: str
+
+
+class SearchResponse(BaseModel):
+    query: str
+    total: int
+    results: list[SearchResult]

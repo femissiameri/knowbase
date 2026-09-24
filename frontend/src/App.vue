@@ -33,6 +33,20 @@ interface SyncResult {
   documents: IndexedDocument[]
 }
 
+interface SearchResult {
+  chunk_id: number
+  document_id: number
+  document_name: string
+  document_path: string
+  chunk_index: number
+  content: string
+}
+
+const searchQuery = ref('')
+const searchResults = ref<SearchResult[]>([])
+const isSearching = ref(false)
+const searchError = ref('')
+
 const supportedExtensions = new Set(['txt', 'md', 'pdf', 'docx']);
 
 const folderInput = ref<HTMLInputElement | null>(null)
@@ -200,6 +214,41 @@ async function indexDocuments() {
   }
 }
 
+async function searchDocuments() {
+  const query = searchQuery.value.trim()
+
+  if (!query) {
+    searchResults.value = []
+    return
+  }
+
+  isSearching.value = true
+  searchError.value = ''
+
+  try {
+    const response = await fetch(
+      `/api/search?q=${encodeURIComponent(query)}`,
+    )
+
+    if (!response.ok) {
+      throw new Error(
+        `Backend returned ${response.status}`,
+      )
+    }
+
+    const data = await response.json()
+
+    searchResults.value = data.results
+  } catch (error) {
+    searchError.value =
+      error instanceof Error
+        ? error.message
+        : 'Search failed.'
+  } finally {
+    isSearching.value = false
+  }
+}
+
 onMounted(() => {
   loadDocuments()
 })
@@ -223,6 +272,45 @@ onMounted(() => {
         Select a folder
       </button>
 
+
+      <section class="search-section">
+        <div class="search-box">
+          <input v-model="searchQuery" type="search" placeholder="Search your knowledge base..."
+            @keyup.enter="searchDocuments" />
+
+          <button type="button" :disabled="isSearching" @click="searchDocuments">
+            {{ isSearching ? 'Searching...' : 'Search' }}
+          </button>
+        </div>
+
+        <p v-if="searchError" class="error-message">
+          {{ searchError }}
+        </p>
+
+        <div v-if="searchResults.length > 0" class="search-results">
+          <div v-for="result in searchResults" :key="result.chunk_id" class="search-result">
+            <div class="search-result-header">
+              <div>
+                <p class="search-result-title">
+                  {{ result.document_name }}
+                </p>
+
+                <p class="search-result-path">
+                  {{ result.document_path }}
+                </p>
+              </div>
+
+              <span class="search-result-chunk">
+                Chunk {{ result.chunk_index + 1 }}
+              </span>
+            </div>
+
+            <p class="search-result-content">
+              {{ result.content }}
+            </p>
+          </div>
+        </div>
+      </section>
 
       <div v-if="files.length > 0" class="files-section">
         <div class="files-header">
