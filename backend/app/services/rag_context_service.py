@@ -80,14 +80,24 @@ class RAGContextService:
     def _rerank_results(query: str, results: list):
         phrases = re.findall(r'"([^"]+)"', query)
 
-        if not phrases:
-            return results
-
         normalized_phrases = [
             phrase.strip().lower()
             for phrase in phrases
             if phrase.strip()
         ]
+
+        if normalized_phrases:
+            exact_matches = [
+                result
+                for result in results
+                if all(
+                    phrase in result.content.lower()
+                    for phrase in normalized_phrases
+                )
+            ]
+
+            if exact_matches:
+                return exact_matches
 
         def score(result):
             content = result.content.lower()
@@ -107,6 +117,7 @@ class RAGContextService:
             return exact_phrase_score + semantic_score
 
         return sorted(results, key=score, reverse=True)
+
 
     @staticmethod
     def _format_source_header(reference, result):

@@ -36,9 +36,9 @@ interface SearchResult {
   document_name: string
   document_path: string
   chunk_index: number
+  content: string
   page_number: number | null
   section: string | null
-  content: string
 }
 
 interface SemanticSearchResult
@@ -58,6 +58,23 @@ interface SyncResult {
   unchanged: number
   deleted: number
   documents: IndexedDocument[]
+}
+
+interface RAGSource {
+  reference: number
+  chunk_id: number
+  document_id: number
+  document_name: string
+  document_path: string
+  chunk_index: number
+  page_number: number | null
+  section: string | null
+}
+
+interface RAGAnswerResponse {
+  query: string
+  answer: string
+  sources: RAGSource[]
 }
 
 type SearchResultItem =
@@ -103,6 +120,11 @@ const isSearching =
 const searchError = ref('')
 
 const indexError = ref('')
+
+const ragAnswer = ref('')
+const ragSources = ref<RAGSource[]>([])
+const isAsking = ref(false)
+const ragError = ref('')
 
 const lastSync = ref<{
   created: number
@@ -487,6 +509,41 @@ function performSearch() {
   searchDocuments()
 }
 
+async function askKnowBase() {
+  const query = searchQuery.value.trim()
+
+  if (!query) {
+    return
+  }
+
+  isAsking.value = true
+  ragError.value = ''
+  ragAnswer.value = ''
+  ragSources.value = []
+
+  try {
+    const response = await fetch(
+      `/api/rag/answer?q=${encodeURIComponent(query)}`,
+    )
+
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status}`)
+    }
+
+    const data = (await response.json()) as RAGAnswerResponse
+
+    ragAnswer.value = data.answer
+    ragSources.value = data.sources
+  } catch (error) {
+    ragError.value =
+      error instanceof Error
+        ? error.message
+        : 'Failed to generate an answer.'
+  } finally {
+    isAsking.value = false
+  }
+}
+
 function switchSearchMode(
   mode: SearchMode,
 ) {
@@ -762,14 +819,13 @@ onMounted(() => {
               </button>
             </div>
 
-            <button type="submit" class="primary-button" :disabled="isSearching ||
-              !searchQuery.trim()
-              ">
-              {{
-                isSearching
-                  ? 'Searching...'
-                  : 'Search'
-              }}
+            <button
+              type="button"
+              class="primary-button"
+              :disabled="isAsking || !searchQuery.trim()"
+              @click="askKnowBase"
+            >
+              {{ isAsking ? 'Thinking...' : 'Ask' }}
             </button>
           </div>
         </form>
@@ -790,12 +846,94 @@ onMounted(() => {
           </span>
         </div>
 
+        <section
+          v-if="isAsking || ragAnswer"
+          class="answer-section"
+        >
+          <div class="answer-header">
+            <div>
+              <p class="section-label">KNOWBASE ANSWER</p>
+              <h2>Answer</h2>
+            </div>
+
+            <span v-if="isAsking" class="answer-status">
+              Generating locally
+            </span>
+          </div>
+
+          <div v-if="isAsking" class="answer-card answer-loading">
+            <div class="loading-indicator"></div>
+
+            <div>
+              <strong>Thinking...</strong>
+              <p>Searching your documents and generating a grounded answer.</p>
+            </div>
+          </div>
+
+          <div v-else class="answer-card">
+            <div class="answer-content">
+              {{ ragAnswer }}
+            </div>
+          </div>
+
+          <div
+            v-if="!isAsking && ragSources.length > 0"
+            class="sources-section"
+          >
+            <div class="sources-header">
+              <p class="section-label">SOURCES</p>
+              <span>{{ ragSources.length }} source{{ ragSources.length === 1 ? '' : 's' }}</span>
+            </div>
+
+            <div class="sources-list">
+              <article
+                v-for="source in ragSources"
+                :key="source.reference"
+                class="source-card"
+              >
+                <div class="source-number">
+                  {{ source.reference }}
+                </div>
+
+                <div class="source-info">
+                  <h3>
+                    {{ source.document_name }}
+                  </h3>
+
+                  <p>
+                    {{ source.document_path }}
+                  </p>
+
+                  <div class="source-meta">
+                    <span v-if="source.page_number !== null">
+                      Page {{ source.page_number }}
+                    </span>
+
+                    <span v-if="source.section">
+                      {{ source.section }}
+                    </span>
+
+                    <span>
+                      Chunk {{ source.chunk_index + 1 }}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <p v-if="ragError" class="error-message">
+          {{ ragError }}
+        </p>
+
         <!-- No results -->
         <div v-else-if="
           !isSearching &&
+          !isAsking &&
           searchQuery &&
-          currentSearchResults.length ===
-          0 &&
+          !ragAnswer &&
+          currentSearchResults.length === 0 &&
           !searchError
         " class="empty-search">
           <div class="empty-icon">
