@@ -5,7 +5,7 @@
     system-ui,
     -apple-system,
     BlinkMacSystemFont,
-    "Segoe UI",
+    'Segoe UI',
     sans-serif;
 
   color: #18181b;
@@ -78,12 +78,7 @@ button:disabled {
 
   border-bottom: 1px solid var(--border);
 
-  background: rgba(
-    255,
-    255,
-    255,
-    0.92
-  );
+  background: rgba(255, 255, 255, 0.92);
 
   backdrop-filter: blur(18px);
 }
@@ -170,9 +165,7 @@ button:disabled {
   background: white;
   color: var(--text);
 
-  box-shadow:
-    0 1px 2px
-    rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .nav-count {
@@ -197,10 +190,7 @@ button:disabled {
 ===================================================== */
 
 .page {
-  width: min(
-    1080px,
-    100%
-  );
+  width: min(1080px, 100%);
 
   margin: 0 auto;
 
@@ -208,9 +198,7 @@ button:disabled {
 }
 
 .page-section {
-  min-height: calc(
-    100vh - 136px
-  );
+  min-height: calc(100vh - 136px);
 }
 
 .page-heading,
@@ -243,11 +231,7 @@ h1 {
 
   margin: 10px 0 0;
 
-  font-size: clamp(
-    38px,
-    6vw,
-    62px
-  );
+  font-size: clamp(38px, 6vw, 62px);
 
   line-height: 1.03;
 
@@ -291,9 +275,7 @@ h1 {
   color: white;
 }
 
-.primary-button:hover:not(
-    :disabled
-  ) {
+.primary-button:hover:not(:disabled) {
   opacity: 0.88;
 }
 
@@ -325,14 +307,7 @@ h1 {
 
   background: white;
 
-  box-shadow:
-    0 8px 30px
-    rgba(
-      24,
-      24,
-      27,
-      0.05
-    );
+  box-shadow: 0 8px 30px rgba(24, 24, 27, 0.05);
 }
 
 .search-input-wrapper {
@@ -356,14 +331,7 @@ h1 {
 .search-input-wrapper:focus-within {
   border-color: #a1a1aa;
 
-  box-shadow:
-    0 0 0 3px
-    rgba(
-      24,
-      24,
-      27,
-      0.04
-    );
+  box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.04);
 }
 
 .search-icon {
@@ -457,9 +425,7 @@ h1 {
   background: white;
   color: var(--text);
 
-  box-shadow:
-    0 1px 2px
-    rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* =====================================================
@@ -489,8 +455,7 @@ h1 {
 
   background: #71717a;
 
-  animation: pulse 1s
-    ease-in-out infinite;
+  animation: pulse 1s ease-in-out infinite;
 }
 
 @keyframes pulse {
@@ -575,14 +540,7 @@ h1 {
 .result-card:hover {
   border-color: #d4d4d8;
 
-  box-shadow:
-    0 4px 14px
-    rgba(
-      24,
-      24,
-      27,
-      0.04
-    );
+  box-shadow: 0 4px 14px rgba(24, 24, 27, 0.04);
 }
 
 .result-card.expanded {
@@ -741,8 +699,7 @@ h1 {
   margin-top: 14px;
   padding-top: 12px;
 
-  border-top: 1px solid
-    var(--border-light);
+  border-top: 1px solid var(--border-light);
 }
 
 .text-button,
@@ -783,12 +740,7 @@ h1 {
   border: 1px dashed #d4d4d8;
   border-radius: 14px;
 
-  background: rgba(
-    255,
-    255,
-    255,
-    0.6
-  );
+  background: rgba(255, 255, 255, 0.6);
 
   text-align: center;
 }
@@ -827,12 +779,8 @@ h1 {
   letter-spacing: -0.02em;
 }
 
-.empty-search p:not(
-    .section-label
-  ),
-.search-empty-state p:not(
-    .section-label
-  ),
+.empty-search p:not(.section-label),
+.search-empty-state p:not(.section-label),
 .empty-state p {
   max-width: 430px;
 
@@ -897,14 +845,7 @@ h1 {
 
   background: white;
 
-  box-shadow:
-    0 2px 10px
-    rgba(
-      24,
-      24,
-      27,
-      0.02
-    );
+  box-shadow: 0 2px 10px rgba(24, 24, 27, 0.02);
 }
 
 .folder-card-content {
@@ -941,9 +882,7 @@ h1 {
   letter-spacing: -0.01em;
 }
 
-.folder-card p:not(
-    .section-label
-  ) {
+.folder-card p:not(.section-label) {
   margin: 5px 0 0;
 
   color: var(--muted);
@@ -1006,8 +945,7 @@ h1 {
 
   padding: 13px 14px;
 
-  border-bottom: 1px solid
-    var(--border-light);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .file-row:last-child {
@@ -1110,8 +1048,7 @@ h1 {
 .sync-summary {
   display: grid;
 
-  grid-template-columns:
-    repeat(4, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 
   margin-top: 18px;
 
@@ -1131,8 +1068,7 @@ h1 {
 
   padding: 15px;
 
-  border-right: 1px solid
-    var(--border-light);
+  border-right: 1px solid var(--border-light);
 }
 
 .sync-summary > div:last-child {
@@ -1184,14 +1120,7 @@ h1 {
 .indexed-card:hover {
   border-color: #d4d4d8;
 
-  box-shadow:
-    0 3px 10px
-    rgba(
-      24,
-      24,
-      27,
-      0.03
-    );
+  box-shadow: 0 3px 10px rgba(24, 24, 27, 0.03);
 }
 
 .indexed-card-main {
@@ -1245,19 +1174,16 @@ h1 {
   font-size: 10px;
 }
 
-.indexed-meta span
-  + span {
+.indexed-meta span + span {
   padding-left: 12px;
 
-  border-left: 1px solid
-    var(--border);
+  border-left: 1px solid var(--border);
 }
 
 .loading-state {
   padding: 30px;
 
-  border: 1px dashed
-    var(--border);
+  border: 1px dashed var(--border);
 
   border-radius: 14px;
 
@@ -1361,26 +1287,19 @@ h1 {
 
   .result-document-info h3,
   .result-document-info p {
-    max-width: calc(
-      100vw - 110px
-    );
+    max-width: calc(100vw - 110px);
   }
 
   .sync-summary {
-    grid-template-columns:
-      repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .sync-summary > div:nth-child(2) {
     border-right: 0;
   }
 
-  .sync-summary
-    > div:nth-child(
-      -n + 2
-    ) {
-    border-bottom: 1px solid
-      var(--border-light);
+  .sync-summary > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border-light);
   }
 
   .indexed-card {
@@ -1397,7 +1316,6 @@ h1 {
     display: none;
   }
 }
-
 
 .answer-section {
   margin-top: 28px;
