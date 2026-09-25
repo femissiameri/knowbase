@@ -14,9 +14,13 @@ from app.database import (
 from app.schemas import (
     DocumentsResponse,
     HybridSearchResponse,
+    RAGContextResponse,
     SearchResponse,
     SemanticSearchResponse,
     SyncResult,
+)
+from app.services.rag_context_service import (
+    RAGContextService,
 )
 from app.services.hybrid_search_service import (
     HybridSearchService,
@@ -142,4 +146,19 @@ async def hybrid_search(
         query=q,
         total=len(results),
         results=results,
+    )
+
+
+@app.get(
+    "/api/rag/context",
+    response_model=RAGContextResponse,
+)
+async def build_rag_context(
+    q: str,
+    db: Session = Depends(get_db),
+):
+    service = RAGContextService(db)
+
+    return service.build_context(
+        query=q,
     )

@@ -78,3 +78,20 @@ class HybridSearchResponse(BaseModel):
     query: str
     total: int
     results: list[HybridSearchResult]
+
+
+class RAGSource(BaseModel):
+    reference: int
+    chunk_id: int
+    document_id: int
+    document_name: str
+    document_path: str
+    chunk_index: int
+    page_number: int | None
+    section: str | None
+
+
+class RAGContextResponse(BaseModel):
+    query: str
+    context: str
+    sources: list[RAGSource]
