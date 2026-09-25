@@ -95,3 +95,9 @@ class RAGContextResponse(BaseModel):
     query: str
     context: str
     sources: list[RAGSource]
+
+
+class RAGAnswerResponse(BaseModel):
+    query: str
+    answer: str
+    sources: list[RAGSource]

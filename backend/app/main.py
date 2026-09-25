@@ -18,7 +18,9 @@ from app.schemas import (
     SearchResponse,
     SemanticSearchResponse,
     SyncResult,
+    RAGAnswerResponse,
 )
+from app.services.rag_answer_service import RAGAnswerService
 from app.services.rag_context_service import (
     RAGContextService,
 )
@@ -161,4 +163,20 @@ async def build_rag_context(
 
     return service.build_context(
         query=q,
+    )
+
+
+@app.get("/api/rag/answer", response_model=RAGAnswerResponse)
+def rag_answer(
+    q: str,
+    db: Session = Depends(get_db),
+):
+    service = RAGAnswerService(db)
+
+    answer, context = service.answer(q)
+
+    return RAGAnswerResponse(
+        query=q,
+        answer=answer,
+        sources=context.sources,
     )
